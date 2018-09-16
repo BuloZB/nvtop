@@ -424,10 +424,19 @@ static const char* memory_prefix[] = { "B", "k", "M", "G", "T", "P" };
 
 static void draw_temp_color(WINDOW *win,
     unsigned int temp,
-    unsigned int temp_slowdown) {
-  mvwprintw(win, 0, 0, "TEMP %3u", temp);
+    unsigned int temp_slowdown,
+    bool celsius) {
+  unsigned int temp_convert;
+  if (celsius)
+    temp_convert = temp;
+  else
+    temp_convert = 32 + (unsigned int) (nearbyint(temp * 1.8));
+  mvwprintw(win, 0, 0, "TEMP %3u", temp_convert);
   waddch(win, ACS_DEGREE);
-  waddch(win, 'C');
+  if (celsius)
+    waddch(win, 'C');
+  else
+    waddch(win, 'F');
   if (temp >= temp_slowdown - 5) {
     if (temp >= temp_slowdown)
       mvwchgat(win, 0, 5, 3, 0, red_color, NULL);
@@ -525,7 +534,8 @@ static void draw_devices(
         IS_VALID(gpu_temp_slowdown_valid, dinfo->valid))
       draw_temp_color(dev->temperature,
           dinfo->gpu_temp,
-          dinfo->gpu_temp_slowdown);
+          dinfo->gpu_temp_slowdown,
+          false);
     else {
       mvwprintw(dev->temperature, 0, 0, "TEMP N/A°C");
       wnoutrefresh(dev->temperature);
